@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจองห้องประชุมออนไลน์ - วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Sarabun & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FullCalendar CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+  
+  <!-- SheetJS (XLSX export) CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  
+  <!-- SweetAlert2 CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="css/style.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            college: {
+              navy: '#1e3a8a',
+              navyDark: '#0f172a',
+              gold: '#f59e0b',
+              goldDark: '#b45309',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-['Sarabun'] antialiased">
+
+  <!-- Header Section -->
+  <header class="bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-950 text-white shadow-md sticky top-0 z-40 border-b border-blue-800/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-400 font-bold shadow-inner flex-shrink-0">
+          <i data-lucide="building-2" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold font-['Prompt'] tracking-wide text-white">วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์</h1>
+            <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full font-semibold">ระบบทางการ</span>
+          </div>
+          <p class="text-xs text-blue-200/90 font-medium">ระบบจองห้องประชุมออนไลน์ (Online Meeting Room Reservation System)</p>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="flex items-center gap-2 self-end md:self-auto">
+        <a href="https://docs.google.com/spreadsheets/d/1INM8RbdBHvvFXlepkvF1A_d5k0f4y4y01SH_HmrzIT4/edit?gid=0#gid=0" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-400/40 text-emerald-200 rounded-lg transition" title="เปิดดู Google Sheet">
+          <i data-lucide="sheet" class="w-4 h-4 text-emerald-400"></i>
+          <span class="hidden sm:inline">Google Sheets</span>
+        </a>
+        <button id="btn-open-settings" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-lg transition" title="ตั้งค่าการเชื่อมต่อ">
+          <i data-lucide="settings" class="w-4 h-4"></i>
+          <span>ตั้งค่าระบบ / API</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-blue-800/60">
+      <nav class="flex space-x-1 sm:space-x-2 py-2 overflow-x-auto no-scrollbar text-sm font-medium">
+        <button data-tab-target="calendar" class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 bg-blue-900 text-white shadow-sm whitespace-nowrap">
+          <i data-lucide="calendar" class="w-4 h-4"></i>
+          <span>ปฏิทินการใช้ห้อง</span>
+        </button>
+        <button data-tab-target="booking" class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 text-slate-200 hover:bg-blue-800/60 whitespace-nowrap">
+          <i data-lucide="file-plus" class="w-4 h-4"></i>
+          <span>ยื่นคำขอจองห้อง</span>
+        </button>
+        <button data-tab-target="my-bookings" class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 text-slate-200 hover:bg-blue-800/60 whitespace-nowrap">
+          <i data-lucide="list-checks" class="w-4 h-4"></i>
+          <span>ติดตามสถานะการจอง</span>
+        </button>
+        <button data-tab-target="approver" class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 text-slate-200 hover:bg-blue-800/60 whitespace-nowrap relative">
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span>สำหรับผู้ตรวจสอบและผู้อนุมัติ</span>
+          <span id="approver-pending-badge" class="hidden ml-1 px-1.5 py-0.2 text-[10px] bg-amber-500 text-slate-950 font-bold rounded-full">0</span>
+        </button>
+        <button data-tab-target="reports" class="px-3.5 py-1.5 rounded-lg transition flex items-center gap-2 text-slate-200 hover:bg-blue-800/60 whitespace-nowrap">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+          <span>รายงานสถิติ & สรุปผล</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ========================================== -->
+    <!-- TAB 1: CALENDAR VIEW                       -->
+    <!-- ========================================== -->
+    <section id="tab-calendar" class="tab-pane space-y-5">
+      <!-- Calendar Filter and Legend Header -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 flex items-center gap-2 font-['Prompt']">
+            <i data-lucide="calendar-days" class="w-5 h-5 text-blue-900"></i>
+            ตารางการใช้ห้องประชุมทั้งหมด
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">คลิกที่รายการในปฏิทินเพื่อดูรายละเอียด หรือกรองตามห้องประชุม</p>
+        </div>
+
+        <!-- Room Filter Pills -->
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <button onclick="filterCalendarByRoom('all')" class="px-2.5 py-1 rounded-md bg-slate-800 text-white font-medium hover:bg-slate-700 transition">ทั้งหมด</button>
+          <button onclick="filterCalendarByRoom('หอประชุมอดิเรกสาร')" class="px-2.5 py-1 rounded-md bg-blue-100 text-blue-800 font-medium hover:bg-blue-200 border border-blue-300">หอประชุมอดิเรกสาร</button>
+          <button onclick="filterCalendarByRoom('ห้องประชุมสักทอง')" class="px-2.5 py-1 rounded-md bg-amber-100 text-amber-800 font-medium hover:bg-amber-200 border border-amber-300">ห้องประชุมสักทอง</button>
+          <button onclick="filterCalendarByRoom('ห้องประชุม (กาแฟ)')" class="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-medium hover:bg-emerald-200 border border-emerald-300">ห้องประชุม (กาแฟ)</button>
+          <button onclick="filterCalendarByRoom('อาคารโดมเอนกประสงค์')" class="px-2.5 py-1 rounded-md bg-purple-100 text-purple-800 font-medium hover:bg-purple-200 border border-purple-300">อาคารโดมเอนกประสงค์</button>
+          <button onclick="filterCalendarByRoom('ห้องประชุมหน้าห้องผู้อำนวยการ')" class="px-2.5 py-1 rounded-md bg-red-100 text-red-800 font-medium hover:bg-red-200 border border-red-300">หน้าห้อง ผอ.</button>
+          <button onclick="filterCalendarByRoom('ห้องคอมพิวเตอร์กลาง (ห้องโสต)')" class="px-2.5 py-1 rounded-md bg-cyan-100 text-cyan-800 font-medium hover:bg-cyan-200 border border-cyan-300">ห้องคอมฯ (ห้องโสต)</button>
+        </div>
+      </div>
+
+      <!-- Calendar Body -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+        <div id="calendar" class="min-h-[600px]"></div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 2: BOOKING REQUEST FORM                -->
+    <!-- ========================================== -->
+    <section id="tab-booking" class="tab-pane hidden space-y-6">
+      <div class="max-w-4xl mx-auto bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <!-- Form Header -->
+        <div class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white px-6 py-5">
+          <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-white/10 rounded-xl">
+              <i data-lucide="file-text" class="w-6 h-6 text-amber-300"></i>
+            </div>
+            <div>
+              <h2 class="text-lg font-bold font-['Prompt']">แบบฟอร์มขออนุญาตใช้ห้องประชุมทางการ</h2>
+              <p class="text-xs text-blue-200 mt-0.5">วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์ (ข้อมูลจะบันทึกลง Google Sheets แบบเรียลไทม์)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Body -->
+        <form id="booking-form" class="p-6 sm:p-8 space-y-8">
+          
+          <!-- Section 1: ข้อมูลผู้ขอใช้ -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b pb-2 text-blue-900">
+              <i data-lucide="user" class="w-5 h-5"></i>
+              <h3 class="font-bold font-['Prompt'] text-base">๑. ข้อมูลผู้ขออนุญาต</h3>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
+                <input type="text" id="fullName" required placeholder="เช่น นายสมเกียรติ ปัญญาวงศ์" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ตำแหน่ง <span class="text-red-500">*</span></label>
+                <input type="text" id="position" required placeholder="เช่น ครูชำนาญการ, หัวหน้าแผนกวิชา, เจ้าหน้าที่" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">หน่วยงาน / สาขาวิชา <span class="text-red-500">*</span></label>
+                <input type="text" id="department" required placeholder="เช่น แผนกวิชาช่างยนต์, งานบริหารงานทั่วไป" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ <span class="text-red-500">*</span></label>
+                <input type="tel" id="phone" required placeholder="เช่น 081-234-5678" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 2: รายละเอียดการขอใช้ -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b pb-2 text-blue-900">
+              <i data-lucide="calendar" class="w-5 h-5"></i>
+              <h3 class="font-bold font-['Prompt'] text-base">๒. รายละเอียดการขอใช้ห้องประชุม</h3>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div class="sm:col-span-2">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">หัวข้อ / เรื่องในการดำเนินงาน <span class="text-red-500">*</span></label>
+                <input type="text" id="topic" required placeholder="เช่น การประชุมเตรียมความพร้อมแข่งขันทักษะวิชาชีพ" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">จำนวนผู้เข้าใช้ (ประมาณ/คน) <span class="text-red-500">*</span></label>
+                <input type="number" id="attendees" min="1" required placeholder="เช่น 30" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+            </div>
+
+            <!-- Room selection -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ห้องประชุมที่ขอใช้ <span class="text-red-500">*</span></label>
+                <select id="roomName" required class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none bg-white transition">
+                  <option value="" disabled selected>-- กรุณาเลือกห้องประชุม --</option>
+                  <option value="หอประชุมอดิเรกสาร">หอประชุมอดิเรกสาร (ความจุขนาดใหญ่ 150-300 คน)</option>
+                  <option value="ห้องประชุมสักทอง">ห้องประชุมสักทอง (ความจุ 30-60 คน)</option>
+                  <option value="ห้องประชุม (กาแฟ)">ห้องประชุม (กาแฟ) (ความจุ 15-25 คน)</option>
+                  <option value="อาคารโดมเอนกประสงค์">อาคารโดมเอนกประสงค์ (กิจกรรมกลางแจ้ง/ในร่ม)</option>
+                  <option value="ห้องประชุมหน้าห้องผู้อำนวยการ">ห้องประชุมหน้าห้องผู้อำนวยการ (ความจุ 10-15 คน)</option>
+                  <option value="ห้องคอมพิวเตอร์กลาง (ห้องโสต)">ห้องคอมพิวเตอร์กลาง (ห้องโสต) (ความจุ 40 คน)</option>
+                  <option value="อื่นๆ">อื่นๆ (ระบุเพิ่มเติม)</option>
+                </select>
+              </div>
+              <div id="roomOtherContainer" class="hidden">
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ระบุสถานที่หรือห้องอื่นๆ <span class="text-red-500">*</span></label>
+                <input type="text" id="roomOther" placeholder="เช่น ห้องประชุมแผนกวิชาสามัญสัมพันธ์" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+              </div>
+            </div>
+
+            <!-- Date and Time -->
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่เริ่มต้น <span class="text-red-500">*</span></label>
+                <input type="date" id="startDate" required class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">วันที่สิ้นสุด <span class="text-red-500">*</span></label>
+                <input type="date" id="endDate" required class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ตั้งแต่เวลา <span class="text-red-500">*</span></label>
+                <input type="time" id="startTime" required value="08:30" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition bg-white">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1">ถึงเวลา <span class="text-red-500">*</span></label>
+                <input type="time" id="endTime" required value="16:30" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition bg-white">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: ขอใช้อุปกรณ์/ครุภัณฑ์ -->
+          <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b pb-2 text-blue-900">
+              <i data-lucide="tv" class="w-5 h-5"></i>
+              <h3 class="font-bold font-['Prompt'] text-base">๓. ขอใช้อุปกรณ์ / ครุภัณฑ์ (เลือกได้มากกว่า 1 อย่าง)</h3>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="เครื่องฉายภาพ (Projector)" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>เครื่องฉายภาพ (Projector)</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="ระบบเสียง" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>ระบบเสียง</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="ไมโครโฟน" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>ไมโครโฟน</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="เครื่องปรับอากาศ" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>เครื่องปรับอากาศ</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="อินเทอร์เน็ต" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>อินเทอร์เน็ต (Wi-Fi)</span>
+              </label>
+              <label class="flex items-center gap-2.5 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 cursor-pointer transition">
+                <input type="checkbox" name="equipment" value="โต๊ะ/เก้าอี้เพิ่มเติม" class="w-4 h-4 text-blue-900 rounded focus:ring-blue-800">
+                <span>โต๊ะ / เก้าอี้เพิ่มเติม</span>
+              </label>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">อุปกรณ์หรือข้อกำหนดอื่นๆ เพิ่มเติม</label>
+              <textarea id="equipmentOther" rows="2" placeholder="เช่น ขอปลั๊กพ่วง 3 จุด, โพเดียม, สายแปลง HDMI เป็น Type-C" class="w-full px-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition"></textarea>
+            </div>
+          </div>
+
+          <!-- Section 4: ขั้นตอนการอนุมัติ (Approval Workflow Notice) -->
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 text-xs text-amber-900 flex items-start gap-3">
+            <i data-lucide="info" class="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5"></i>
+            <div>
+              <p class="font-bold text-sm text-amber-950 mb-1">ขั้นตอนกระบวนการพิจารณาอนุญาต (Approval Workflow):</p>
+              <ol class="list-decimal list-inside space-y-0.5 text-amber-800">
+                <li>เมื่อส่งคำขอ สถานะเริ่มต้นจะเป็น <b>"รอตรวจสอบ"</b></li>
+                <li><b>เจ้าหน้าที่งานศูนย์ดิจิทัลและสื่อสารองค์กร</b> ตรวจสอบความพร้อมของห้องและอุปกรณ์</li>
+                <li><b>รองผู้อำนวยการฝ่ายพัฒนายุทธศาสตร์และแผนงาน</b> พิจารณาอนุมัติคำขอ</li>
+                <li>ท่านจะได้รับแจ้งเตือนและสามารถพิมพ์ใบขออนุญาตทางการพร้อมลายเซ็นได้ทันที</li>
+              </ol>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-end gap-3 pt-4 border-t">
+            <button type="reset" class="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 text-sm font-medium hover:bg-slate-100 transition">
+              ล้างข้อมูล
+            </button>
+            <button type="submit" class="px-7 py-2.5 rounded-xl bg-blue-900 hover:bg-blue-800 text-white text-sm font-semibold shadow-md transition flex items-center gap-2">
+              <i data-lucide="send" class="w-4 h-4"></i>
+              <span>ส่งคำขอจองห้องประชุม</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 3: MY BOOKINGS & TRACKING              -->
+    <!-- ========================================== -->
+    <section id="tab-my-bookings" class="tab-pane hidden space-y-5">
+      <!-- Search & Filter Bar -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="relative flex-1 max-w-md">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-3"></i>
+          <input type="text" id="search-booking-input" placeholder="ค้นหาด้วย รหัสจอง, ชื่อผู้ขอ, หัวข้อ, ห้องประชุม..." class="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-slate-300 focus:ring-2 focus:ring-blue-800 focus:border-blue-800 outline-none transition">
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label class="text-xs font-semibold text-slate-600 whitespace-nowrap">กรองตามสถานะ:</label>
+          <select id="filter-status-select" class="px-3 py-2 text-xs font-medium rounded-lg border border-slate-300 bg-white outline-none">
+            <option value="all">ทั้งหมด ทุกสถานะ</option>
+            <option value="รอตรวจสอบ">รอตรวจสอบ (งานศูนย์ดิจิทัลฯ)</option>
+            <option value="รออนุมัติ">รออนุมัติ (รอง ผอ.)</option>
+            <option value="อนุมัติแล้ว">อนุมัติแล้ว</option>
+            <option value="ไม่อนุมัติ">ไม่อนุมัติ</option>
+          </select>
+          <button onclick="loadAndRefreshData()" class="px-3 py-2 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1" title="รีเฟรชข้อมูล">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span class="hidden sm:inline">รีเฟรช</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Bookings Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider font-['Prompt']">
+                <th class="px-4 py-3.5">รหัสการจอง</th>
+                <th class="px-4 py-3.5">หัวข้อ / เรื่อง</th>
+                <th class="px-4 py-3.5">ห้องประชุม</th>
+                <th class="px-4 py-3.5">วันเวลาที่ใช้</th>
+                <th class="px-4 py-3.5">ผู้ขออนุญาต</th>
+                <th class="px-4 py-3.5 text-center">สถานะ</th>
+                <th class="px-4 py-3.5 text-center">การจัดการ</th>
+              </tr>
+            </thead>
+            <tbody id="my-bookings-table-body" class="divide-y divide-slate-100">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 4: APPROVER & ADMIN DASHBOARD          -->
+    <!-- ========================================== -->
+    <section id="tab-approver" class="tab-pane hidden space-y-8">
+      
+      <!-- Stage 1: IT Center Review -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-amber-500/10 border-b border-amber-200 px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-amber-500 text-white rounded-lg">
+              <i data-lucide="check-square" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-base text-amber-950 font-['Prompt']">ขั้นตอนที่ ๑: งานศูนย์ดิจิทัลและสื่อสารองค์กร</h3>
+              <p class="text-xs text-amber-800">ตรวจสอบความพร้อมใช้งานของห้องประชุม และอุปกรณ์/ครุภัณฑ์ระบบสารสนเทศ</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+            สถานะ: รอตรวจสอบ
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b text-xs font-bold text-slate-600 font-['Prompt']">
+                <th class="px-4 py-3">รหัสการจอง</th>
+                <th class="px-4 py-3">หัวข้อ / ผู้ขอ</th>
+                <th class="px-4 py-3">ห้องประชุม</th>
+                <th class="px-4 py-3">วันและเวลา</th>
+                <th class="px-4 py-3">อุปกรณ์ที่ขอ</th>
+                <th class="px-4 py-3 text-center">การตรวจสอบ</th>
+              </tr>
+            </thead>
+            <tbody id="it-review-table-body" class="divide-y divide-slate-100">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Stage 2: Deputy Director Approval -->
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-blue-500/10 border-b border-blue-200 px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="p-2 bg-blue-900 text-white rounded-lg">
+              <i data-lucide="shield-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-base text-blue-950 font-['Prompt']">ขั้นตอนที่ ๒: รองผู้อำนวยการฝ่ายพัฒนายุทธศาสตร์และแผนงาน</h3>
+              <p class="text-xs text-blue-800">พิจารณาอนุญาต / ไม่อนุญาตคำขอใช้ห้องประชุม</p>
+            </div>
+          </div>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-100 text-blue-900 border border-blue-300">
+            สถานะ: รออนุมัติ
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b text-xs font-bold text-slate-600 font-['Prompt']">
+                <th class="px-4 py-3">รหัสการจอง</th>
+                <th class="px-4 py-3">หัวข้อ / ผู้ขอ</th>
+                <th class="px-4 py-3">ห้องประชุม</th>
+                <th class="px-4 py-3">วันเวลา & ผลตรวจห้อง</th>
+                <th class="px-4 py-3">จำนวนผู้ใช้ / อุปกรณ์</th>
+                <th class="px-4 py-3 text-center">การพิจารณา</th>
+              </tr>
+            </thead>
+            <tbody id="exec-approval-table-body" class="divide-y divide-slate-100">
+              <!-- Loaded dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================== -->
+    <!-- TAB 5: REPORTS & STATISTICS                -->
+    <!-- ========================================== -->
+    <section id="tab-reports" class="tab-pane hidden space-y-6">
+      
+      <!-- Date Range Filter & Export Button -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-800 font-['Prompt'] flex items-center gap-2">
+            <i data-lucide="pie-chart" class="w-5 h-5 text-blue-900"></i>
+            รายงานสถิติการใช้งานห้องประชุมและอุปกรณ์
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">สรุปข้อมูลเชิงสถิติเพื่อการวางแผนและจัดสรรทรัพยากรของวิทยาลัย</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center gap-1.5 text-xs text-slate-600">
+            <span>จาก:</span>
+            <input type="date" id="report-start-date" class="px-2.5 py-1.5 rounded-lg border border-slate-300 outline-none text-xs bg-white">
+            <span>ถึง:</span>
+            <input type="date" id="report-end-date" class="px-2.5 py-1.5 rounded-lg border border-slate-300 outline-none text-xs bg-white">
+          </div>
+          <button id="btn-export-excel" class="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-sm transition flex items-center gap-1.5">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+            <span>Export เป็น Excel (.xlsx)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>คำขอจองทั้งหมด</span>
+            <i data-lucide="layers" class="w-4 h-4 text-blue-900"></i>
+          </div>
+          <div id="stat-total-bookings" class="text-2xl font-bold text-slate-800 mt-2 font-['Prompt']">0</div>
+          <p class="text-[11px] text-slate-400 mt-1">รายการคำขอทั้งหมดในระบบ</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>อนุมัติแล้ว</span>
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div id="stat-approved-bookings" class="text-2xl font-bold text-emerald-600 mt-2 font-['Prompt']">0</div>
+          <p class="text-[11px] text-slate-400 mt-1">พร้อมใช้งานและอนุมัติเสร็จสิ้น</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>รอการตรวจสอบ/อนุมัติ</span>
+            <i data-lucide="clock" class="w-4 h-4 text-amber-600"></i>
+          </div>
+          <div id="stat-pending-bookings" class="text-2xl font-bold text-amber-600 mt-2 font-['Prompt']">0</div>
+          <p class="text-[11px] text-slate-400 mt-1">อยู่ระหว่างการดำเนินการ</p>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between text-slate-500 text-xs font-semibold">
+            <span>ไม่อนุมัติ / ยกเลิก</span>
+            <i data-lucide="x-circle" class="w-4 h-4 text-red-600"></i>
+          </div>
+          <div id="stat-rejected-bookings" class="text-2xl font-bold text-red-600 mt-2 font-['Prompt']">0</div>
+          <p class="text-[11px] text-slate-400 mt-1">รายการที่ไม่ผ่านการอนุมัติ</p>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <canvas id="roomUsageChart" height="220"></canvas>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <canvas id="equipmentUsageChart" height="220"></canvas>
+        </div>
+      </div>
+
+      <!-- Report Table -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="p-4 border-b border-slate-200">
+          <h4 class="font-bold text-sm text-slate-800 font-['Prompt']">ตารางสรุปข้อมูลตามช่วงเวลา</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-slate-50 border-b text-xs font-bold text-slate-600 font-['Prompt']">
+                <th class="px-4 py-3 text-center">ลำดับ</th>
+                <th class="px-4 py-3">รหัสการจอง</th>
+                <th class="px-4 py-3">หัวข้อ / เรื่อง</th>
+                <th class="px-4 py-3">ห้องประชุม</th>
+                <th class="px-4 py-3">วันและเวลา</th>
+                <th class="px-4 py-3">ผู้ขอ (หน่วยงาน)</th>
+                <th class="px-4 py-3 text-center">สถานะ</th>
+              </tr>
+            </thead>
+            <tbody id="report-table-body" class="divide-y divide-slate-100">
+              <!-- Rendered via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODAL: IT REVIEW (ศูนย์ดิจิทัลฯ)             -->
+  <!-- ========================================== -->
+  <div id="modal-it-review" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <div class="bg-amber-600 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="check-square" class="w-5 h-5"></i>
+          <h3 class="font-bold font-['Prompt'] text-base">ตรวจสอบความพร้อมห้องประชุม</h3>
+        </div>
+        <button onclick="closeITReviewModal()" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-sm">
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs space-y-1">
+          <p><b>รหัสคำขอ:</b> <span id="it-modal-booking-id" class="text-blue-900 font-bold"></span></p>
+          <p><b>ห้องที่ขอ:</b> <span id="it-modal-room" class="font-semibold text-amber-800"></span></p>
+          <p><b>หัวข้อ:</b> <span id="it-modal-topic"></span></p>
+          <p><b>ผู้ขอ:</b> <span id="it-modal-applicant"></span></p>
+          <p><b>วันเวลา:</b> <span id="it-modal-time"></span></p>
+          <p><b>อุปกรณ์ที่ขอใช้:</b> <span id="it-modal-equip-list" class="text-slate-700"></span></p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ชื่อเจ้าหน้าที่ผู้ตรวจสอบ</label>
+          <input type="text" id="it-reviewer-name" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-amber-500">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">บันทึกผลการตรวจสอบอุปกรณ์และความพร้อม</label>
+          <textarea id="it-equipment-notes" rows="3" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t">
+          <button onclick="closeITReviewModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">ยกเลิก</button>
+          <button onclick="submitITReview(false)" class="px-4 py-2 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-1">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i> ไม่พร้อมใช้งาน
+          </button>
+          <button onclick="submitITReview(true)" class="px-4 py-2 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition flex items-center gap-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i> ยืนยันว่าพร้อมใช้งาน
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: EXECUTIVE APPROVAL (รอง ผอ.)        -->
+  <!-- ========================================== -->
+  <div id="modal-exec-approval" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <div class="bg-blue-900 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="font-bold font-['Prompt'] text-base">การพิจารณาอนุมัติคำขอใช้ห้องประชุม</h3>
+        </div>
+        <button onclick="closeExecutiveApprovalModal()" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-sm">
+        <div class="bg-blue-50/60 p-3.5 rounded-lg border border-blue-200 text-xs space-y-1">
+          <p><b>รหัสคำขอ:</b> <span id="exec-modal-booking-id" class="text-blue-900 font-bold"></span></p>
+          <p><b>เรื่อง:</b> <span id="exec-modal-topic" class="font-semibold text-slate-800"></span></p>
+          <p><b>ห้องประชุม:</b> <span id="exec-modal-room" class="font-bold text-blue-900"></span></p>
+          <p><b>ผู้ขอ:</b> <span id="exec-modal-applicant"></span></p>
+          <p><b>วันเวลา:</b> <span id="exec-modal-time"></span></p>
+          <p class="text-emerald-700"><b>การตรวจห้อง:</b> <span id="exec-modal-it-check"></span></p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ผู้อนุมัติ</label>
+          <input type="text" id="exec-approver-name" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-900">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">ข้อคิดเห็น / คำสั่งการของผู้อนุมัติ</label>
+          <textarea id="exec-remarks" rows="2" class="w-full px-3 py-2 text-sm rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-900"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2.5 pt-3 border-t">
+          <button onclick="closeExecutiveApprovalModal()" class="px-4 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition">ยกเลิก</button>
+          <button onclick="submitExecutiveApproval(false)" class="px-4 py-2 text-xs font-semibold bg-red-600 hover:bg-red-700 text-white rounded-lg transition flex items-center gap-1">
+            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i> ไม่อนุมัติ
+          </button>
+          <button onclick="submitExecutiveApproval(true)" class="px-5 py-2 text-xs font-semibold bg-blue-900 hover:bg-blue-800 text-white rounded-lg transition flex items-center gap-1 shadow-sm">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-amber-400"></i> อนุมัติการใช้ห้อง
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: BOOKING DETAIL MODAL                -->
+  <!-- ========================================== -->
+  <div id="modal-booking-detail" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in max-h-[90vh] flex flex-col">
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="info" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="font-bold font-['Prompt'] text-base">รายละเอียดคำขอจองห้องประชุม</h3>
+        </div>
+        <button onclick="closeBookingDetailModal()" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 overflow-y-auto space-y-5 text-sm">
+        <div class="flex items-center justify-between pb-3 border-b">
+          <div>
+            <span class="text-xs text-slate-400">รหัสการจอง:</span>
+            <div id="detail-booking-id" class="text-lg font-bold text-blue-900 font-['Prompt']"></div>
+          </div>
+          <div>
+            <span id="detail-status-badge"></span>
+          </div>
+        </div>
+
+        <!-- Section 1 -->
+        <div>
+          <h4 class="font-bold text-xs uppercase text-slate-400 mb-2 font-['Prompt']">ข้อมูลผู้ขอใช้</h4>
+          <div class="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+            <div><span class="text-slate-500">ชื่อ-นามสกุล:</span> <span id="detail-fullname" class="font-semibold text-slate-800"></span></div>
+            <div><span class="text-slate-500">ตำแหน่ง:</span> <span id="detail-position" class="font-semibold text-slate-800"></span></div>
+            <div><span class="text-slate-500">หน่วยงาน/สาขา:</span> <span id="detail-department" class="font-semibold text-slate-800"></span></div>
+            <div><span class="text-slate-500">เบอร์โทรศัพท์:</span> <span id="detail-phone" class="font-semibold text-slate-800"></span></div>
+          </div>
+        </div>
+
+        <!-- Section 2 -->
+        <div>
+          <h4 class="font-bold text-xs uppercase text-slate-400 mb-2 font-['Prompt']">รายละเอียดการขอใช้</h4>
+          <div class="space-y-2 text-xs bg-slate-50 p-3.5 rounded-lg border border-slate-200">
+            <div><span class="text-slate-500">เรื่อง:</span> <span id="detail-topic" class="font-bold text-slate-800 text-sm"></span></div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><span class="text-slate-500">ห้องประชุม:</span> <span id="detail-room" class="font-bold text-blue-900"></span></div>
+              <div><span class="text-slate-500">จำนวนผู้เข้าใช้:</span> <span id="detail-attendees" class="font-semibold text-slate-800"></span></div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div><span class="text-slate-500">วันที่:</span> <span id="detail-dates" class="font-semibold text-slate-800"></span></div>
+              <div><span class="text-slate-500">เวลา:</span> <span id="detail-times" class="font-semibold text-slate-800"></span></div>
+            </div>
+            <div><span class="text-slate-500">อุปกรณ์ที่ขอใช้:</span> <span id="detail-equipment" class="font-semibold text-slate-800"></span></div>
+            <div><span class="text-slate-500">อุปกรณ์เพิ่มเติม:</span> <span id="detail-equip-other" class="font-semibold text-slate-800"></span></div>
+          </div>
+        </div>
+
+        <!-- Section 3: Status Details -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-3 rounded-lg border border-amber-200 bg-amber-50/50 text-xs space-y-1">
+            <h5 class="font-bold text-amber-900">การตรวจสอบ (งานศูนย์ดิจิทัลฯ)</h5>
+            <p><span class="text-slate-500">สถานะ:</span> <span id="detail-it-status" class="font-semibold"></span></p>
+            <p><span class="text-slate-500">ผู้ตรวจ:</span> <span id="detail-it-by"></span></p>
+            <p><span class="text-slate-500">วันที่:</span> <span id="detail-it-date"></span></p>
+            <p><span class="text-slate-500">หมายเหตุ:</span> <span id="detail-it-notes"></span></p>
+          </div>
+          <div class="p-3 rounded-lg border border-blue-200 bg-blue-50/50 text-xs space-y-1">
+            <h5 class="font-bold text-blue-900">การพิจารณา (รอง ผอ. แผนงาน)</h5>
+            <p><span class="text-slate-500">ผลการอนุมัติ:</span> <span id="detail-approval-status" class="font-semibold"></span></p>
+            <p><span class="text-slate-500">ผู้อนุมัติ:</span> <span id="detail-approval-by"></span></p>
+            <p><span class="text-slate-500">วันที่:</span> <span id="detail-approval-date"></span></p>
+            <p><span class="text-slate-500">ความเห็น:</span> <span id="detail-approval-remarks"></span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 px-6 py-3.5 border-t border-slate-200 flex items-center justify-between">
+        <button onclick="printOfficialSlipById(currentModalBooking.BookingID)" class="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition flex items-center gap-1.5 shadow-sm">
+          <i data-lucide="printer" class="w-4 h-4"></i>
+          <span>พิมพ์แบบฟอร์มขออนุญาตทางการ</span>
+        </button>
+        <button onclick="closeBookingDetailModal()" class="px-4 py-2 text-xs font-semibold bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg transition">
+          ปิดหน้าต่าง
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- MODAL: SETTINGS (Google Apps Script & Line) -->
+  <!-- ========================================== -->
+  <div id="modal-settings" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl max-w-xl w-full shadow-2xl border border-slate-200 overflow-hidden animate-fade-in">
+      <div class="bg-slate-900 text-white px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="settings" class="w-5 h-5 text-amber-400"></i>
+          <h3 class="font-bold font-['Prompt'] text-base">การตั้งค่าเชื่อมต่อระบบ & API</h3>
+        </div>
+        <button id="btn-close-settings" class="text-white/80 hover:text-white">&times;</button>
+      </div>
+
+      <div class="p-6 space-y-4 text-sm">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">
+            Google Apps Script Web App URL (Endpoint)
+          </label>
+          <input type="url" id="setting-apps-script-url" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="w-full px-3.5 py-2 text-xs font-mono rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-900">
+          <p class="text-[11px] text-slate-500 mt-1">
+            นำ URL ที่ได้จากการกด "ทำให้ใช้งานได้" (Deploy as Web App) ใน Google Sheets นำมาวางที่นี่
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 mb-1">
+            LINE Notify Token (สำหรับการแจ้งเตือนกลุ่มวิทยาลัย / เจ้าหน้าที่)
+          </label>
+          <input type="text" id="setting-line-token" placeholder="ใส่ Line Notify Token (ถ้ามี)" class="w-full px-3.5 py-2 text-xs font-mono rounded-lg border border-slate-300 outline-none focus:ring-2 focus:ring-blue-900">
+          <p class="text-[11px] text-slate-500 mt-1">
+            ระบบจะส่งแจ้งเตือนเข้าห้อง LINE อัตโนมัติทุกครั้งที่มีการจอง หรือมีการอนุมัติ
+          </p>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
+          <p class="font-bold text-slate-700">Google Sheet ที่เชื่อมต่อ:</p>
+          <p class="text-blue-900 font-mono break-all select-all">https://docs.google.com/spreadsheets/d/1INM8RbdBHvvFXlepkvF1A_d5k0f4y4y01SH_HmrzIT4/edit</p>
+          <p class="text-slate-500">โค้ด Google Apps Script (`Code.gs`) จัดเตรียมไว้ให้พร้อมใช้งานแล้วในโฟลเดอร์ <code>google-apps-script/</code></p>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t">
+          <button id="btn-save-settings" class="px-5 py-2 text-xs font-semibold bg-blue-900 hover:bg-blue-800 text-white rounded-lg transition shadow-sm">
+            บันทึกการตั้งค่า
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="global-loading" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex flex-col items-center justify-center hidden">
+    <div class="bg-white p-5 rounded-2xl shadow-xl flex items-center gap-3 border border-slate-200">
+      <div class="w-6 h-6 border-3 border-blue-900 border-t-transparent rounded-full animate-spin"></div>
+      <span id="global-loading-text" class="text-sm font-semibold text-slate-800">กำลังโหลดข้อมูล...</span>
+    </div>
+  </div>
+
+  <!-- Printable Official Slip Container (Hidden on screen, visible on print) -->
+  <div id="printable-official-slip" class="hidden"></div>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 text-xs py-5 border-t border-slate-800 text-center">
+    <div class="max-w-7xl mx-auto px-4 space-y-1">
+      <p class="text-slate-300 font-medium font-['Prompt']">วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์</p>
+      <p>งานศูนย์ดิจิทัลและสื่อสารองค์กร & ฝ่ายพัฒนายุทธศาสตร์และแผนงาน</p>
+      <p class="text-[11px] text-slate-500">ระบบเชื่อมต่อฐานข้อมูล Google Sheets แบบอัตโนมัติเรียลไทม์</p>
+    </div>
+  </footer>
+
+  <!-- App Scripts -->
+  <script src="js/api.js"></script>
+  <script src="js/calendar.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

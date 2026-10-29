@@ -1,0 +1,115 @@
+/* Custom styles for ระบบจองห้องประชุม วิทยาลัยเทคนิคท่าหลวงซิเมนต์ไทยอนุสรณ์ */
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Prompt:wght@400;500;600;700&display=swap');
+
+:root {
+  --primary-navy: #1e3a8a;
+  --primary-navy-dark: #0f172a;
+  --accent-gold: #f59e0b;
+  --accent-gold-dark: #d97706;
+}
+
+body {
+  font-family: 'Sarabun', sans-serif;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: 'Prompt', 'Sarabun', sans-serif;
+}
+
+/* Status Badges */
+.badge-pending-it {
+  background-color: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.badge-pending-exec {
+  background-color: #e0f2fe;
+  color: #075985;
+  border: 1px solid #bae6fd;
+}
+
+.badge-approved {
+  background-color: #dcfce7;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+
+.badge-rejected {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+/* Calendar styling overrides */
+.fc {
+  font-family: 'Sarabun', sans-serif !important;
+}
+
+.fc-toolbar-title {
+  font-family: 'Prompt', sans-serif !important;
+  font-size: 1.25rem !important;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.fc .fc-button-primary {
+  background-color: #1e3a8a !important;
+  border-color: #1e3a8a !important;
+  text-transform: capitalize;
+  font-size: 0.875rem !important;
+  border-radius: 0.5rem !important;
+}
+
+.fc .fc-button-primary:hover {
+  background-color: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.fc .fc-button-primary:disabled {
+  background-color: #94a3b8 !important;
+  border-color: #94a3b8 !important;
+}
+
+.fc-event {
+  cursor: pointer;
+  border-radius: 6px !important;
+  padding: 2px 4px !important;
+  font-size: 0.8rem !important;
+  transition: transform 0.1s ease;
+}
+
+.fc-event:hover {
+  transform: scale(1.02);
+}
+
+/* Room color classes for calendar events */
+.room-adirek { background-color: #2563eb !important; border-color: #1d4ed8 !important; }
+.room-sakthong { background-color: #d97706 !important; border-color: #b45309 !important; }
+.room-coffee { background-color: #059669 !important; border-color: #047857 !important; }
+.room-dome { background-color: #7c3aed !important; border-color: #6d28d9 !important; }
+.room-director { background-color: #dc2626 !important; border-color: #b91c1c !important; }
+.room-audio { background-color: #0891b2 !important; border-color: #0e7490 !important; }
+.room-other { background-color: #4b5563 !important; border-color: #374151 !important; }
+
+/* Official Printable Form */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-official-slip, #printable-official-slip * {
+    visibility: visible;
+  }
+  #printable-official-slip {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    background: white;
+  }
+  .no-print {
+    display: none !important;
+  }
+}
