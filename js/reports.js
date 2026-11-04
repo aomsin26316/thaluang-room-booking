@@ -1,5 +1,6 @@
 /**
  * Reports and Analytics Module with Chart.js and XLSX export
+ * สรุปสถิติการใช้งานห้องประชุม และการส่งออกรายงานเป็นไฟล์ Excel (.xlsx)
  */
 
 let roomChartInstance = null;
@@ -10,9 +11,12 @@ function renderReports(bookings) {
 
   // สรุปตัวเลข KPI Cards
   const total = filteredBookings.length;
-  const approved = filteredBookings.filter(b => b.OverallStatus === "อนุมัติแล้ว").length;
-  const pending = filteredBookings.filter(b => b.OverallStatus === "รอตรวจสอบ" || b.OverallStatus === "รออนุมัติ").length;
-  const rejected = filteredBookings.filter(b => b.OverallStatus === "ไม่อนุมัติ").length;
+  const approved = filteredBookings.filter(b => (b.Status || b.OverallStatus) === "อนุมัติแล้ว").length;
+  const pending = filteredBookings.filter(b => {
+    const s = b.Status || b.OverallStatus;
+    return s === "รอตรวจสอบ" || s === "รออนุมัติ";
+  }).length;
+  const rejected = filteredBookings.filter(b => (b.Status || b.OverallStatus) === "ไม่อนุมัติ").length;
 
   document.getElementById("stat-total-bookings").textContent = total;
   document.getElementById("stat-approved-bookings").textContent = approved;
@@ -44,22 +48,26 @@ function renderRoomChart(bookings) {
   const ctx = document.getElementById("roomUsageChart")?.getContext("2d");
   if (!ctx) return;
 
-  const roomCounts = {
-    "หอประชุมอดิเรกสาร": 0,
-    "ห้องประชุมสักทอง": 0,
-    "ห้องประชุม (กาแฟ)": 0,
-    "อาคารโดมเอนกประสงค์": 0,
-    "ห้องประชุมหน้าห้องผู้อำนวยการ": 0,
-    "ห้องคอมพิวเตอร์กลาง (ห้องโสต)": 0,
-    "อื่นๆ": 0
-  };
+  const roomCounts = {};
+  // ตั้งค่าห้องจาก Config ถ้ามี
+  if (window.api && window.api.appConfig && window.api.appConfig.roomList) {
+    window.api.appConfig.roomList.forEach(r => { roomCounts[r] = 0; });
+  } else {
+    roomCounts["หอประชุมอดิเรกสาร"] = 0;
+    roomCounts["ห้องประชุมสักทอง"] = 0;
+    roomCounts["ห้องประชุม (กาแฟ)"] = 0;
+    roomCounts["อาคารโดมเอนกประสงค์"] = 0;
+    roomCounts["ห้องประชุมหน้าห้องผู้อำนวยการ"] = 0;
+    roomCounts["ห้องคอมพิวเตอร์กลาง (ห้องโสต)"] = 0;
+    roomCounts["อื่นๆ"] = 0;
+  }
 
   bookings.forEach(b => {
     const room = b.RoomName;
     if (roomCounts.hasOwnProperty(room)) {
       roomCounts[room]++;
     } else {
-      roomCounts["อื่นๆ"]++;
+      roomCounts["อื่นๆ"] = (roomCounts["อื่นๆ"] || 0) + 1;
     }
   });
 
@@ -120,7 +128,7 @@ function renderEquipmentChart(bookings) {
   };
 
   bookings.forEach(b => {
-    const equipStr = b.Equipment || "";
+    const equipStr = String(b.Equipments_JSON || b.Equipment || "");
     Object.keys(equipmentCounts).forEach(key => {
       if (equipStr.includes(key)) {
         equipmentCounts[key]++;
@@ -171,21 +179,26 @@ function renderReportTable(bookings) {
     return;
   }
 
-  tbody.innerHTML = bookings.map((b, idx) => `
-    <tr class="hover:bg-slate-50 border-b text-sm">
-      <td class="px-4 py-3 text-center text-gray-600">${idx + 1}</td>
-      <td class="px-4 py-3 font-semibold text-blue-900">${b.BookingID}</td>
-      <td class="px-4 py-3 font-medium text-slate-800">${b.Topic}</td>
-      <td class="px-4 py-3 text-slate-600">${b.RoomName}</td>
-      <td class="px-4 py-3 text-slate-600">${b.StartDate} (${b.StartTime} - ${b.EndTime})</td>
-      <td class="px-4 py-3 text-slate-600">${b.FullName} (${b.Department})</td>
-      <td class="px-4 py-3 text-center">
-        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(b.OverallStatus)}">
-          ${b.OverallStatus}
-        </span>
-      </td>
-    </tr>
-  `).join("");
+  tbody.innerHTML = bookings.map((b, idx) => {
+    const status = b.Status || b.OverallStatus;
+    const purpose = b.Purpose || b.Topic;
+    const applicant = b.PrefixName || b.FullName;
+    return `
+      <tr class="hover:bg-slate-50 border-b text-sm">
+        <td class="px-4 py-3 text-center text-gray-600">${idx + 1}</td>
+        <td class="px-4 py-3 font-semibold text-blue-900">${b.BookingID}</td>
+        <td class="px-4 py-3 font-medium text-slate-800">${purpose}</td>
+        <td class="px-4 py-3 text-slate-600">${b.RoomName}</td>
+        <td class="px-4 py-3 text-slate-600">${b.StartDate} (${b.StartTime} - ${b.EndTime})</td>
+        <td class="px-4 py-3 text-slate-600">${applicant} (${b.Department})</td>
+        <td class="px-4 py-3 text-center">
+          <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${getStatusBadgeClass(status)}">
+            ${status}
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function exportReportToExcel() {
@@ -199,16 +212,15 @@ function exportReportToExcel() {
     return;
   }
 
-  // แปลง Object เป็นรูปแบบภาษาไทยสำหรับรายงาน
   const excelData = bookings.map((b, index) => ({
     "ลำดับ": index + 1,
     "รหัสการจอง": b.BookingID,
     "วันเวลาที่ส่งคำขอ": b.Timestamp,
-    "ชื่อ-นามสกุล": b.FullName,
+    "ชื่อ-นามสกุล ผู้ขอ": b.PrefixName || b.FullName,
     "ตำแหน่ง": b.Position,
     "หน่วยงาน/สาขาวิชา": b.Department,
     "เบอร์โทรศัพท์": b.Phone,
-    "หัวข้อ/เรื่อง": b.Topic,
+    "หัวข้อ/วัตถุประสงค์": b.Purpose || b.Topic,
     "จำนวนผู้เข้าใช้ (คน)": b.Attendees,
     "ห้องประชุม": b.RoomName,
     "ห้องอื่นๆ": b.RoomOther,
@@ -216,24 +228,30 @@ function exportReportToExcel() {
     "วันที่สิ้นสุด": b.EndDate,
     "ตั้งแต่เวลา": b.StartTime,
     "ถึงเวลา": b.EndTime,
-    "อุปกรณ์ที่ขอใช้": b.Equipment,
-    "อุปกรณ์เพิ่มเติม": b.EquipmentOther,
-    "สถานะภาพรวม": b.OverallStatus,
-    "ความพร้อมห้อง (ศูนย์ดิจิทัล)": b.ITCheckStatus,
-    "ผู้ตรวจสอบ (ศูนย์ดิจิทัล)": b.ITCheckBy,
-    "วันที่ตรวจสอบ": b.ITCheckDate,
-    "ผลการอนุมัติ (รอง ผอ.)": b.ApprovalStatus,
-    "ผู้อนุมัติ": b.ApprovalBy,
-    "วันที่อนุมัติ": b.ApprovalDate,
-    "ความเห็นผู้อนุมัติ": b.ApprovalRemarks
+    "อุปกรณ์ที่ขอใช้": b.Equipments_JSON || b.Equipment,
+    "โต๊ะ/เก้าอี้เพิ่มเติม (ตัว)": b.ExtraChairsCount || 0,
+    "สถานะภาพรวม": b.Status || b.OverallStatus,
+    "ผลตรวจห้อง (ศูนย์ดิจิทัล)": b.InspectorStatus || b.ITCheckStatus,
+    "บันทึกตรวจห้อง": b.InspectorNote || b.ITCheckEquipment,
+    "วันที่ตรวจห้อง": b.InspectorDate || b.ITCheckDate,
+    "ความเห็นหัวหน้างาน": b.SupervisorStatus || "-",
+    "บันทึกหัวหน้างาน": b.SupervisorNote || "-",
+    "ผลการอนุมัติ (ผู้บริหาร)": b.ApproverStatus || b.ApprovalStatus,
+    "คำสั่งการผู้อนุมัติ": b.ApproverNote || b.ApprovalRemarks,
+    "วันที่อนุมัติ": b.ApproverDate || b.ApprovalDate,
+    "Google Calendar Event": b.CalendarEventID || "-",
+    "ลิงก์เอกสาร PDF (Drive)": b.PDF_Drive_URL || "-"
   }));
 
   const worksheet = XLSX.utils.json_to_sheet(excelData);
   const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "รายงานการใช้ห้องประชุม");
+  const sheetName = "รายงานการจองห้องประชุม";
+  XLSX.utils.book_append_sheet(workbook, worksheet, sheetName);
 
+  const college = (window.api && window.api.appConfig && window.api.appConfig.collegeName) ? window.api.appConfig.collegeName : "วท_ท่าหลวง";
+  const cleanCollege = college.replace(/\s+/g, "_");
   const todayStr = new Date().toISOString().slice(0, 10);
-  XLSX.writeFile(workbook, `รายงานการจองห้องประชุม_วท_ท่าหลวง_${todayStr}.xlsx`);
+  XLSX.writeFile(workbook, `รายงานการจองห้องประชุม_${cleanCollege}_${todayStr}.xlsx`);
 
   Swal.fire({
     icon: "success",

@@ -1,5 +1,6 @@
 /**
  * Calendar Management Module with FullCalendar
+ * ระบบปฏิทินอัจฉริยะ แสดงตารางการใช้ห้องประชุมและตรวจสอบการจองทับซ้อน
  */
 
 let calendarInstance = null;
@@ -50,8 +51,10 @@ function initMeetingCalendar(bookings) {
       }
     },
     eventDidMount: function(info) {
-      // Add tooltip/popover
-      info.el.title = `${info.event.title}\nผู้ขอ: ${info.event.extendedProps.rawBooking.FullName}\nสถานะ: ${info.event.extendedProps.rawBooking.OverallStatus}`;
+      const b = info.event.extendedProps.rawBooking;
+      const applicant = b.PrefixName || b.FullName || "-";
+      const status = b.Status || b.OverallStatus || "-";
+      info.el.title = `${info.event.title}\nผู้ขอ: ${applicant}\nสถานะ: ${status}`;
     }
   });
 
@@ -62,23 +65,26 @@ function formatBookingsForCalendar(bookings, filterRoom = "all") {
   return bookings
     .filter(b => {
       if (filterRoom !== "all" && b.RoomName !== filterRoom) return false;
-      // เฉพาะรายการที่ยังไม่ถูกปฏิเสธหรือยกเลิก
-      return b.OverallStatus !== "ไม่อนุมัติ" && b.OverallStatus !== "ยกเลิก";
+      const status = b.Status || b.OverallStatus;
+      // ข้ามรายการที่ไม่อนุมัติหรือยกเลิก
+      return status !== "ไม่อนุมัติ" && status !== "ยกเลิก";
     })
     .map(b => {
       const colorScheme = ROOM_COLORS[b.RoomName] || { bg: "#4b5563", border: "#374151" };
       
-      // วันที่และเวลา ISO
       const startStr = `${b.StartDate}T${b.StartTime || '08:00'}:00`;
       const endStr = `${b.EndDate || b.StartDate}T${b.EndTime || '17:00'}:00`;
 
+      const status = b.Status || b.OverallStatus;
       let statusIcon = "⏳ ";
-      if (b.OverallStatus === "อนุมัติแล้ว") statusIcon = "✅ ";
-      else if (b.OverallStatus === "รออนุมัติ") statusIcon = "📋 ";
+      if (status === "อนุมัติแล้ว") statusIcon = "✅ ";
+      else if (status === "รออนุมัติ") statusIcon = "📋 ";
+
+      const purpose = b.Purpose || b.Topic || "ใช้ห้องประชุม";
 
       return {
         id: b.BookingID,
-        title: `${statusIcon}[${b.RoomName}] ${b.Topic}`,
+        title: `${statusIcon}[${b.RoomName}] ${purpose}`,
         start: startStr,
         end: endStr,
         backgroundColor: colorScheme.bg,
@@ -98,11 +104,12 @@ function checkBookingConflict(allBookings, newRoom, startDate, endDate, startTim
   const newStart = new Date(`${startDate}T${startTime}:00`).getTime();
   const newEnd = new Date(`${endDate || startDate}T${endTime}:00`).getTime();
 
-  const conflicts = allBookings.filter(b => {
+  return allBookings.filter(b => {
     if (excludeBookingId && b.BookingID === excludeBookingId) return false;
     if (b.RoomName !== newRoom) return false;
-    // ข้ามที่ยกเลิกหรือไม่อนุมัติ
-    if (b.OverallStatus === "ไม่อนุมัติ" || b.OverallStatus === "ยกเลิก") return false;
+    
+    const status = b.Status || b.OverallStatus;
+    if (status === "ไม่อนุมัติ" || status === "ยกเลิก") return false;
 
     const existStart = new Date(`${b.StartDate}T${b.StartTime}:00`).getTime();
     const existEnd = new Date(`${b.EndDate || b.StartDate}T${b.EndTime}:00`).getTime();
@@ -110,8 +117,6 @@ function checkBookingConflict(allBookings, newRoom, startDate, endDate, startTim
     // ทับซ้อนกันเมื่อ (StartA < EndB) AND (EndA > StartB)
     return (newStart < existEnd && newEnd > existStart);
   });
-
-  return conflicts;
 }
 
 window.filterCalendarByRoom = function(roomName) {
